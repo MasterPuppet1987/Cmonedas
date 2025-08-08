@@ -5,22 +5,26 @@
   <title>Colección de Monedas</title>
   <link rel="icon" type="image/png" href="icon.png">
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
-    header { background-color: #333; color: #fff; padding: 1rem; text-align: center; }
-    .category { margin: 1rem; padding: 1rem; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    .category h2 { margin-top: 0; }
-    .photos { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
-    .photo { perspective: 1000px; width: 150px; display: flex; flex-direction: column; align-items: center; }
-    .photo-inner { position: relative; width: 100%; transform-style: preserve-3d; transition: transform 0.8s; }
-    .photo:hover .photo-inner { transform: rotateY(180deg); }
-    .photo-front, .photo-back { position: absolute; width: 100%; backface-visibility: hidden; border-radius: 6px; overflow: hidden; text-align: center; display: flex; flex-direction: column; }
-    .photo-front img, .photo-back img { width: 100%; border-radius: 4px; }
-    .photo-back { transform: rotateY(180deg); }
-    .photo small { display: block; margin-top: 0.3rem; font-size: 0.9em; text-align: center; }
-    .admin-panel { position: fixed; bottom: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; }
-    .admin-only { display: none; margin-top: 1rem; }
-    .timeline { font-size: 0.9em; color: #666; }
-  </style>
+  body { font-family: sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
+  header { background-color: #333; color: #fff; padding: 1rem; text-align: center; }
+  .category { margin: 1rem; padding: 1rem; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+  .category h2 { margin-top: 0; }
+  .photos { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+  .photo { perspective: 1000px; width: 150px; display: flex; flex-direction: column; align-items: center; }
+  .photo-inner { position: relative; width: 100%; transform-style: preserve-3d; transition: transform 0.8s; }
+  .photo:hover .photo-inner { transform: rotateY(180deg); }
+  .photo-front, .photo-back {
+    position: absolute; width: 100%; backface-visibility: hidden; border-radius: 6px; overflow: hidden;
+    text-align: center; display: flex; flex-direction: column;
+    background: transparent; /* <-- This line ensures transparency */
+  }
+  .photo-front img, .photo-back img { width: 100%; border-radius: 4px; }
+  .photo-back { transform: rotateY(180deg); }
+  .photo small { display: block; margin-top: 0.3rem; font-size: 0.9em; text-align: center; }
+  .admin-panel { position: fixed; bottom: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; }
+  .admin-only { display: none; margin-top: 1rem; }
+  .timeline { font-size: 0.9em; color: #666; }
+</style>
 </head>
 <body>
   <header><h1>Colección de Monedas</h1></header>
@@ -283,3 +287,4 @@
 </body>
 
 </html>
+
