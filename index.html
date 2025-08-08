@@ -48,11 +48,62 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script>
-    const passwordHash = "68110fb818401ca4d194e7c7b1a2d9b1"; 
+    // ---- IndexedDB Storage System ----
+    const DB_NAME = "photoGalleryDB";
+    const DB_VERSION = 1;
+    const STORE_NAME = "gallery";
+    let db;
     let isAdmin = false;
-    let data = JSON.parse(localStorage.getItem('photoGallery') || '{}');
+    const passwordHash = "68110fb818401ca4d194e7c7b1a2d9b1";
 
-    function saveData() { localStorage.setItem('photoGallery', JSON.stringify(data)); }
+    // Utility functions for IndexedDB
+    function openDB(callback) {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onupgradeneeded = function(event) {
+        db = event.target.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME);
+        }
+      };
+      request.onsuccess = function(event) {
+        db = event.target.result;
+        if (callback) callback();
+      };
+      request.onerror = function(event) {
+        alert("Error abriendo la base de datos.");
+      };
+    }
+
+    function getData(cb) {
+      openDB(() => {
+        const tx = db.transaction(STORE_NAME, "readonly");
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.get("data");
+        req.onsuccess = function() {
+          let result = req.result;
+          if (!result) result = {};
+          cb(result);
+        };
+        req.onerror = function() { cb({}); };
+      });
+    }
+
+    function setData(newData, cb) {
+      openDB(() => {
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.put(newData, "data");
+        req.onsuccess = function() { if (cb) cb(); };
+        req.onerror = function() { alert("No se pudo guardar."); };
+      });
+    }
+
+    // Data object
+    let data = {};
+
+    function saveData() {
+      setData(data);
+    }
 
     function login() {
       const input = document.getElementById('passwordInput').value;
@@ -222,7 +273,13 @@
       });
     }
 
-    window.onload = render;
+    window.onload = function() {
+      getData(function(dbData) {
+        data = dbData;
+        render();
+      });
+    };
   </script>
 </body>
+
 </html>
