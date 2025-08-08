@@ -5,26 +5,26 @@
   <title>Colección de Monedas</title>
   <link rel="icon" type="image/png" href="icon.png">
   <style>
-  body { font-family: sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
-  header { background-color: #333; color: #fff; padding: 1rem; text-align: center; }
-  .category { margin: 1rem; padding: 1rem; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-  .category h2 { margin-top: 0; }
-  .photos { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
-  .photo { perspective: 1000px; width: 150px; display: flex; flex-direction: column; align-items: center; }
-  .photo-inner { position: relative; width: 100%; transform-style: preserve-3d; transition: transform 0.8s; }
-  .photo:hover .photo-inner { transform: rotateY(180deg); }
-  .photo-front, .photo-back {
-    position: absolute; width: 100%; backface-visibility: hidden; border-radius: 6px; overflow: hidden;
-    text-align: center; display: flex; flex-direction: column;
-    background: transparent; /* <-- This line ensures transparency */
-  }
-  .photo-front img, .photo-back img { width: 100%; border-radius: 4px; }
-  .photo-back { transform: rotateY(180deg); }
-  .photo small { display: block; margin-top: 0.3rem; font-size: 0.9em; text-align: center; }
-  .admin-panel { position: fixed; bottom: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; }
-  .admin-only { display: none; margin-top: 1rem; }
-  .timeline { font-size: 0.9em; color: #666; }
-</style>
+    body { font-family: sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
+    header { background-color: #333; color: #fff; padding: 1rem; text-align: center; }
+    .category { margin: 1rem; padding: 1rem; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .category h2 { margin-top: 0; }
+    .photos { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+    .photo { perspective: 1000px; width: 150px; display: flex; flex-direction: column; align-items: center; }
+    .photo-inner { position: relative; width: 100%; transform-style: preserve-3d; transition: transform 0.8s; }
+    .photo:hover .photo-inner { transform: rotateY(180deg); }
+    .photo-front, .photo-back {
+      position: absolute; width: 100%; backface-visibility: hidden; border-radius: 6px; overflow: hidden;
+      text-align: center; display: flex; flex-direction: column;
+      background: transparent;
+    }
+    .photo-front img, .photo-back img { width: 100%; border-radius: 4px; }
+    .photo-back { transform: rotateY(180deg); }
+    .photo small { display: block; margin-top: 0.3rem; font-size: 0.9em; text-align: center; }
+    .admin-panel { position: fixed; bottom: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; }
+    .admin-only { display: none; margin-top: 1rem; }
+    .timeline { font-size: 0.9em; color: #666; }
+  </style>
 </head>
 <body>
   <header><h1>Colección de Monedas</h1></header>
@@ -134,7 +134,11 @@
       const name = document.getElementById('photoName').value.trim();
       const year = parseInt(document.getElementById('photoYear').value.trim());
 
-      const process = (frontSrc, backSrc) => {
+      const process = async (frontSrc, backSrc) => {
+        frontSrc = await blackToTransparent(frontSrc);
+        if (backSrc) {
+          backSrc = await blackToTransparent(backSrc);
+        }
         data[category].push({ frontSrc, backSrc, name, year });
         data[category].sort((a, b) => (a.year || 0) - (b.year || 0));
         saveData(); render();
@@ -144,16 +148,16 @@
         const frontSrc = await compressImage(fileFront);
         if (fileBack) {
           const backSrc = await compressImage(fileBack);
-          process(frontSrc, backSrc);
+          await process(frontSrc, backSrc);
         } else if (urlBack) {
-          process(frontSrc, urlBack);
+          await process(frontSrc, urlBack);
         } else {
-          process(frontSrc, null);
+          await process(frontSrc, null);
         }
       } else if (urlFront) {
         const frontSrc = urlFront;
         const backSrc = urlBack || null;
-        process(frontSrc, backSrc);
+        await process(frontSrc, backSrc);
       } else {
         alert("Sube una imagen frontal o proporciona una URL");
       }
@@ -251,7 +255,7 @@
 
     function md5(str) { return CryptoJS.MD5(str).toString(); }
 
-    function compressImage(file) {
+    async function compressImage(file) {
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -269,11 +273,37 @@
             canvas.width = w; canvas.height = h;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, w, h);
-            resolve(canvas.toDataURL('image/jpeg', 0.85));
+            resolve(canvas.toDataURL('image/png', 0.85));
           };
           img.src = e.target.result;
         };
         reader.readAsDataURL(file);
+      });
+    }
+
+    // Converts black pixels to transparent in a dataURL image
+    function blackToTransparent(dataURL) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const d = imageData.data;
+          for (let i = 0; i < d.length; i += 4) {
+            // If pixel is black and fully opaque
+            if (d[i] === 0 && d[i+1] === 0 && d[i+2] === 0 && d[i+3] === 255) {
+              d[i+3] = 0; // Set alpha to 0 (transparent)
+            }
+          }
+          ctx.putImageData(imageData, 0, 0);
+          resolve(canvas.toDataURL("image/png"));
+        };
+        img.src = dataURL;
       });
     }
 
@@ -285,6 +315,4 @@
     };
   </script>
 </body>
-
 </html>
-
